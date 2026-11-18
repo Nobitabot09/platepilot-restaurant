@@ -17,6 +17,18 @@ Status: **NOT DEPLOYED, NOT ENROLLED, NOT READY TO MERGE**. Work lives only on `
 - Owner identity must be separately established and verified before first account enrollment; no default owner password or hardcoded bootstrap bypass.
 - The current schema draft needs a distinct `owner` role and actor/target authorization rules before implementation. Owner recovery must be documented and tested before rollout.
 
+## Owner-approved recovery design: trusted family member + assigned developer (18 Nov 2026)
+- Owner may designate a **pre-enrolled, independently authenticated trusted family member** and an **assigned developer approver**. Both must independently approve the **same** pending owner-recovery request (two-of-two quorum); no self-approval and no substitute approvers by default.
+- Developer is a **recovery approver only**, not a password/OTP custodian, superuser or impersonator. Developer must never view the owner's password, TOTP seed, recovery codes, or obtain a reusable login session.
+- Before recovery, owner must register and verify both approvers through an existing authenticated owner session. Changing approvers requires fresh owner MFA and alerts to the old and new approvers. Do not allow enrollment solely via a new recovery request.
+- Recovery starts with a rate-limited, generic-response request. Approvers authenticate with their **own** individual credentials and MFA and independently verify the owner using a pre-agreed out-of-band process. Avoid relying only on caller ID, SMS or email.
+- Approval decisions are signed to a random, expiring, single-purpose request ID; log approver identity, timestamp, method, request state, and device context. Require two distinct actors; expire requests automatically and permit either approver to reject.
+- On two approvals, issue a short-lived, single-use **owner-only** recovery grant via a previously verified owner-controlled channel; require additional proof of control before reset. Neither approver receives this grant.
+- Recovery can reset **only the owner's MFA enrollment**, not password, username, roles, or payment privileges. Force new authenticator enrollment, revoke all old sessions and recovery codes, issue fresh recovery codes, notify owner and both approvers, and apply a cooling-off period / additional confirmation for high-risk changes.
+- Provide a separately documented, offline, owner-controlled emergency fallback if either approver is unavailable or compromised; no permanent developer backdoor or hardcoded override.
+- Implement an explicit `recovery_approver` permission with no access to restaurant data or administrative APIs; do not treat the developer as a manager. Family member likewise has no operational permissions.
+- This is a **design only**: no approver identities, contact details, account records, keys, routes or schema changes have been configured.
+
 ## Proposed architecture
 1. `/` and `/?table=N` serve a customer-only HTML bundle with NO staff views, login controls, or staff JavaScript. Keep all QR and ordering behavior.
 2. `/staff` serves a separate staff-only HTML bundle. A role-specific username + password starts login; successful TOTP challenge completes login. Only authenticated staff receive role-appropriate UI, while APIs enforce authorization independently.
