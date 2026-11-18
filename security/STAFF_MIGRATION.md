@@ -9,6 +9,14 @@ Status: **NOT DEPLOYED, NOT ENROLLED, NOT READY TO MERGE**. Work lives only on `
 - No per-person identity or TOTP enrollment exists yet. Kitchen and manager are shared role passwords; counter credential is optional.
 - Existing D1 orders, order_items, order_events, payments, feedback, menu and settings must remain untouched.
 
+## Confirmed authorization policy (owner decision, 18 Nov 2026)
+- Owner and manager may create, disable and manage ordinary kitchen/counter staff accounts.
+- Only owner may create or promote owner/manager accounts, change manager roles, or reset an owner's MFA.
+- Managers may reset kitchen/counter MFA only after fresh manager authentication, with audit events and notification to owner; they cannot reset other managers' MFA.
+- Staff cannot create accounts, grant roles, or reset anyone else's MFA.
+- Owner identity must be separately established and verified before first account enrollment; no default owner password or hardcoded bootstrap bypass.
+- The current schema draft needs a distinct `owner` role and actor/target authorization rules before implementation. Owner recovery must be documented and tested before rollout.
+
 ## Proposed architecture
 1. `/` and `/?table=N` serve a customer-only HTML bundle with NO staff views, login controls, or staff JavaScript. Keep all QR and ordering behavior.
 2. `/staff` serves a separate staff-only HTML bundle. A role-specific username + password starts login; successful TOTP challenge completes login. Only authenticated staff receive role-appropriate UI, while APIs enforce authorization independently.
